@@ -83,8 +83,15 @@ if __name__ == "__main__":
                 yum install httpd -y
                 systemctl enable httpd
                 systemctl start httpd
+                echo "This instance is AMI ID is:" > index.html
+                curl http://169.254.169.254/latest/meta-data/ami-id >> index.html
+                echo "<hr>The instance ID is: " >> index.html
+                curl http://169.254.169.254/latest/meta-data/instance-id >> index.html
+                echo "<hr>The instance type is: " >> index.html
+                curl http://169.254.169.254/latest/meta-data/instance-type >> index.html
+                mv index.html /var/www/html
                 touch /home/ec2-user/fileCommandsCompleted"""
-    
+
     # Creating EC2 instance
     instance = createInstance(keyPairFilename, userData)
 
