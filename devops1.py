@@ -102,3 +102,6 @@ if __name__ == "__main__":
     webbrowser.open_new_tab('http://' + instance.public_ip_address)
     # Creating S3 bucket
     createBucket()
+
+    # Download image using curl
+    subprocess.run("curl -o logo.jpg http://devops.witdemo.net/logo.jpg", shell=True)
