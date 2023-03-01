@@ -7,7 +7,8 @@
 import boto3
 import webbrowser
 import subprocess
-from time import time
+import random
+import string
 from time import sleep
 
 def createInstance(keyPairFilename, userData):
@@ -55,7 +56,9 @@ def createInstance(keyPairFilename, userData):
 
 def createBucket():
     s3 = boto3.resource('s3')
-    bucketName = "devops-lab-" + str(int(time() * 10000))
+
+    alphaNum = string.ascii_lowercase + string.digits
+    bucketName = "jbloggs-" + "".join(random.sample(alphaNum, 6))
 
     try:
         response = s3.create_bucket(Bucket=bucketName)
