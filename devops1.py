@@ -33,7 +33,10 @@ def createInstance(keyPairFilename, userData):
     # Print out details of created instances
     print("Created instances:")
     for inst in new_instances:
-        inst.reload()
+        while(inst.public_ip_address is None):
+            sleep(1)
+            print("sleeping to get the IP")
+            inst.reload()
         print("ID: " + inst.id + " Public IP: " + inst.public_ip_address)
 
     instance.wait_until_running()
@@ -78,11 +81,12 @@ def createBucket():
     print("Bucket '" + bucketName + "' created.")
     print("Upload an index.html file and test it works!")
 
+    return bucketName
 
 if __name__ == "__main__":
     keyPairFilename = "devopsAwsKey.pem"
     userData = """#!/bin/bash
-                yum update -y
+                #yum update -y
                 yum install httpd -y
                 systemctl enable httpd
                 systemctl start httpd
@@ -101,7 +105,31 @@ if __name__ == "__main__":
     # Opening the Apache test page in the browser
     webbrowser.open_new_tab('http://' + instance.public_ip_address)
     # Creating S3 bucket
-    createBucket()
+    bucketName = createBucket()
 
     # Download image using curl
     subprocess.run("curl -o logo.jpg http://devops.witdemo.net/logo.jpg", shell=True)
+
+    # Create S3 client
+    s3 = boto3.client('s3')
+
+    # Upload image to S3 bucket and make it public
+    with open("logo.jpg", "rb") as f:
+        s3.upload_fileobj(f, bucketName, "logo.jpg", ExtraArgs={'ACL':'public-read', 'ContentType':'image/jpeg'})
+
+    # Enable static website hosting on the bucket
+    s3.put_bucket_website(
+        Bucket=bucketName,
+        WebsiteConfiguration={
+            'ErrorDocument': {'Key': 'error.html'},
+            'IndexDocument': {'Suffix': 'index.html'}
+        }
+    )
+
+    # Create index.html file with image in the S3 bucket
+    with open("index.html", "w") as f:
+        f.write(f'<html><body><img src="http://{bucketName}.s3.amazonaws.com/logo.jpg"></body></html>')
+
+    # Upload index.html to S3 bucket
+    with open("index.html", "rb") as f:
+        s3.upload_fileobj(f, bucketName, "index.html", ExtraArgs={'ACL':'public-read', 'ContentType':'text/html'})
