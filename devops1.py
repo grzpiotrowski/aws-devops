@@ -83,6 +83,7 @@ def createBucket():
 
     return bucketName
 
+
 if __name__ == "__main__":
     keyPairFilename = "devopsAwsKey.pem"
     userData = """#!/bin/bash
@@ -104,6 +105,7 @@ if __name__ == "__main__":
 
     # Opening the Apache test page in the browser
     webbrowser.open_new_tab('http://' + instance.public_ip_address)
+
     # Creating S3 bucket
     bucketName = createBucket()
 
@@ -133,3 +135,6 @@ if __name__ == "__main__":
     # Upload index.html to S3 bucket
     with open("index.html", "rb") as f:
         s3.upload_fileobj(f, bucketName, "index.html", ExtraArgs={'ACL':'public-read', 'ContentType':'text/html'})
+
+    # Opening the S3 bucket website in the browser
+    webbrowser.open_new_tab(f"http://{bucketName}.s3-website-us-east-1.amazonaws.com")
