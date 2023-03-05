@@ -78,8 +78,7 @@ def createBucket():
 
     response = bucket_website.put(WebsiteConfiguration=website_configuration)
 
-    print("Bucket '" + bucketName + "' created.")
-    print("Upload an index.html file and test it works!")
+    print("S3 Bucket '" + bucketName + "' created.")
 
     return bucketName
 
@@ -138,3 +137,12 @@ if __name__ == "__main__":
 
     # Opening the S3 bucket website in the browser
     webbrowser.open_new_tab(f"http://{bucketName}.s3-website-us-east-1.amazonaws.com")
+    
+    monitorCommands = f"""
+        scp -i {keyPairFilename} monitor.sh ec2-user@{instance.public_ip_address}:.
+        ssh -i {keyPairFilename} ec2-user@{instance.public_ip_address} 'chmod 700 monitor.sh'
+        ssh -i {keyPairFilename} ec2-user@{instance.public_ip_address} './monitor.sh'
+    """
+
+    subprocess.run(monitorCommands, shell=True)
+
