@@ -26,8 +26,8 @@ from os.path import exists
 from time import sleep, time
 
 
-def createInstance(keyName, securityGroup, imageId, userData, timeout=60):
-    """Creates a new EC2 instance."""
+def createInstance(keyName, securityGroup, imageId, userData, nameTag, timeout=60):
+    """Creates a new t2.nano EC2 instance."""
 
     ec2 = boto3.resource('ec2')
     print("Creating a new ec2 instance...")
@@ -44,7 +44,7 @@ def createInstance(keyName, securityGroup, imageId, userData, timeout=60):
 
     instance = new_instances[0]
     # Adding a name tag to the created instance
-    instance.create_tags(Tags=[{'Key':'Name', 'Value':'Web Server'}])
+    instance.create_tags(Tags=[{'Key':'Name', 'Value':nameTag}])
 
     # Print out details of the created instance
     while(instance.public_ip_address is None):
@@ -128,14 +128,15 @@ if __name__ == "__main__":
     # Default parameters
     keyName = "devopsAwsKey"
     securityGroup = "launch-wizard-1"
-    imageId = 'ami-006dcf34c09e50022'
+    imageId = "ami-006dcf34c09e50022"
+    nameTag = "Test Web Server"
 
 
     # Check if the first optional argument was passed
     try:
         keyName= sys.argv[1]
     except IndexError:
-        pass # No argument found. Using default keyPair instead
+        pass # No argument found. Using default keyPair instead (key pair name)
     
     # Check if key file exists
     keyFilename = keyName + ".pem"
@@ -143,15 +144,21 @@ if __name__ == "__main__":
         print(f"Key Pair file {keyName}.pem not found. Closing the program...")
         exit()
 
-    # Check if the second optional argument was passed
+    # Check if the second optional argument was passed (Security group name)
     try:
         securityGroup = sys.argv[2]
     except IndexError:
         pass
 
-    # Check if the third optional argument was passed
+    # Check if the third optional argument was passed (AMI ID)
     try:
         imageId = sys.argv[3]
+    except IndexError:
+        pass
+
+    # Check if the fourth optional argument was passed (Name Tag)
+    try:
+        nameTag = sys.argv[4]
     except IndexError:
         pass
 
@@ -167,11 +174,13 @@ if __name__ == "__main__":
                 curl http://169.254.169.254/latest/meta-data/instance-id >> index.html
                 echo "<hr>The instance type is: " >> index.html
                 curl http://169.254.169.254/latest/meta-data/instance-type >> index.html
+                echo "<hr>Availability zone: " >> index.html
+                curl http://169.254.169.254/latest/meta-data/placement/availability-zone >> index.html
                 mv index.html /var/www/html
                 touch /home/ec2-user/fileCommandsCompleted"""
 
     # Creating EC2 instance
-    instance = createInstance(keyName, securityGroup, imageId, userData, timeout=60)
+    instance = createInstance(keyName, securityGroup, imageId, userData, nameTag, timeout=60)
 
     # Opening the Apache test page in the browser
     webbrowser.open_new_tab('http://' + instance.public_ip_address)
@@ -187,6 +196,13 @@ if __name__ == "__main__":
 
     # Opening the S3 bucket website in the browser
     webbrowser.open_new_tab(f"http://{bucket.name}.s3-website-us-east-1.amazonaws.com")
+
+    # Writing EC2 and S3 website URLs to a file
+    file = open("grzegorzpiotrowskiurls.txt", "w")
+    file.write(f"http://{bucket.name}.s3-website-us-east-1.amazonaws.com" +
+               "\n" + 
+               f"http://{instance.public_ip_address}")
+    file.close()
     
     # Upload and run monitoring script on EC2 instance
     monitorCommands = f"""

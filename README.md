@@ -45,6 +45,7 @@ https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.h
 
 * AWS documentation - EC2 - Metadata \
 https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html#imdsv1
+https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-categories.html
 
 * Boto3 - S3 \
 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/bucket/index.html
