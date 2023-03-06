@@ -3,18 +3,31 @@
 # Student: Grzegorz Piotrowski
 # DevOps Assignment 1
 
+"""
+    The script takes in a few optional arguments:
+    [1] - keyName
+    [2] - imageId
+
+    Example:
+    python3 devops1.py devopsAwsKey ami-006dcf34c09e50022
+
+    Default values are used when the arguments are not provided.
+"""
 
 import boto3
+import botocore
 import webbrowser
 import subprocess
 import random
 import string
 import sys
 from os.path import exists
-from time import sleep
+from time import sleep, time
 
 
-def createInstance(keyName, imageId, userData):
+def createInstance(keyName, imageId, userData, timeout=60):
+    """Creates a new EC2 instance."""
+
     ec2 = boto3.resource('ec2')
     print("Creating a new ec2 instance...")
 
@@ -45,7 +58,9 @@ def createInstance(keyName, imageId, userData):
 
     # Checking if all UserData commands were executed and 'fileCommandsCompleted' file is on the EC2 instance
     ssh_command = "ssh -o StrictHostKeyChecking=no -i " + keyName + ".pem ec2-user@" + instance.public_ip_address + " 'ls'"
-    for i in range(10):
+    startTime = time()
+    while time() < startTime+timeout:
+        # Every 10 secs check if the file indicating all userData commands executed exists
         result = subprocess.run(ssh_command, shell=True, stdout=subprocess.PIPE)
         filesList = result.stdout.decode('utf-8').strip().split('\n')
         print("Checking if Apache server is running...")
@@ -58,47 +73,80 @@ def createInstance(keyName, imageId, userData):
 
 
 def createBucket():
+    """Creates a new S3 bucket."""
+
     s3 = boto3.resource('s3')
     print("Creating a new S3 Bucket...")
     alphaNum = string.ascii_lowercase + string.digits
-    bucketName = "jbloggs-" + "".join(random.sample(alphaNum, 6))
+    bucketName = "jbloggs" + "".join(random.sample(alphaNum, 6))
 
     try:
-        response = s3.create_bucket(Bucket=bucketName)
-        print(response)
+        s3.create_bucket(Bucket=bucketName)
+    except s3.meta.client.exceptions.BucketAlreadyExists as error:
+        print("Bucket already exists. Creating a bucket with another name...")
+        bucketName = "jbloggs" + "".join(random.sample(alphaNum, 6))
+        s3.create_bucket(Bucket=bucketName)
     except Exception as error:
         print(error)
+        print("Could not create a new S3 bucket. Exiting the script...")
+        exit()
+    print("S3 Bucket '" + bucketName + "' created.")
+
+    return s3.Bucket(bucketName)
+
+
+def configureBucketWebsite(bucket, imageName):
+    """Configures a sample S3 bucket website with an image"""
+
+    s3 = boto3.resource('s3')
 
     website_configuration = {
         'ErrorDocument': {'Key': 'error.html'},
         'IndexDocument': {'Suffix': 'index.html'}
     }
 
-    bucket_website = s3.BucketWebsite(bucketName)
-    response = bucket_website.put(WebsiteConfiguration=website_configuration)
-    print("S3 Bucket '" + bucketName + "' created.")
+    bucket_website = s3.BucketWebsite(bucket.name)
+    bucket_website.put(WebsiteConfiguration=website_configuration)
 
-    return s3.Bucket(bucketName)
+    s3Client = boto3.client("s3")
+
+    # Upload image to S3 bucket and make it public
+    s3Client.upload_file(imageName, bucket.name, imageName, ExtraArgs={'ACL':'public-read', 'ContentType':'image/jpeg'})
+
+    # Create index.html file with image in the S3 bucket
+    with open("index.html", "w") as f:
+        f.write(f'<html><body><img src="http://{bucket.name}.s3.amazonaws.com/{imageName}"></body></html>')
+
+    # Upload index.html to S3 bucket
+    s3Client.upload_file("index.html", bucket.name, "index.html", ExtraArgs={'ACL':'public-read', 'ContentType':'text/html'})
+
+
 
 
 if __name__ == "__main__":
+    # Default parameters
     keyName = "devopsAwsKey"
     imageId = 'ami-006dcf34c09e50022'
+
+    # Check if the first optional argument was passed
     try:
         keyName= sys.argv[1]
     except IndexError:
         pass # No argument found. Using default keyPair instead
     
+    # Check if key file exists
     keyFilename = keyName + ".pem"
     if not exists(keyFilename):
         print(f"Key Pair file {keyName}.pem not found. Closing the program...")
         exit()
 
+    # Check if the second optional argument was passed
     try:
         imageId = sys.argv[2]
     except IndexError:
         pass
 
+    # Commands to be executed when the instance is launched
     userData = """#!/bin/bash
                 #yum update -y
                 yum install httpd -y
@@ -114,7 +162,7 @@ if __name__ == "__main__":
                 touch /home/ec2-user/fileCommandsCompleted"""
 
     # Creating EC2 instance
-    instance = createInstance(keyName, imageId, userData)
+    instance = createInstance(keyName, imageId, userData, timeout=60)
 
     # Opening the Apache test page in the browser
     webbrowser.open_new_tab('http://' + instance.public_ip_address)
@@ -125,21 +173,13 @@ if __name__ == "__main__":
     # Download image using curl
     subprocess.run("curl -o logo.jpg http://devops.witdemo.net/logo.jpg", shell=True)
 
-    s3Client = boto3.client("s3")
-
-    # Upload image to S3 bucket and make it public
-    s3Client.upload_file("logo.jpg", bucket.name, "logo.jpg", ExtraArgs={'ACL':'public-read', 'ContentType':'image/jpeg'})
-
-    # Create index.html file with image in the S3 bucket
-    with open("index.html", "w") as f:
-        f.write(f'<html><body><img src="http://{bucket.name}.s3.amazonaws.com/logo.jpg"></body></html>')
-
-    # Upload index.html to S3 bucket
-    s3Client.upload_file("index.html", bucket.name, "index.html", ExtraArgs={'ACL':'public-read', 'ContentType':'text/html'})
+    # Configure a sample S3 bucket website with an image
+    configureBucketWebsite(bucket, "logo.jpg")
 
     # Opening the S3 bucket website in the browser
     webbrowser.open_new_tab(f"http://{bucket.name}.s3-website-us-east-1.amazonaws.com")
     
+    # Upload and run monitoring script on EC2 instance
     monitorCommands = f"""
         scp -i {keyFilename} monitor.sh ec2-user@{instance.public_ip_address}:.
         ssh -i {keyFilename} ec2-user@{instance.public_ip_address} 'chmod 700 monitor.sh'
@@ -147,4 +187,6 @@ if __name__ == "__main__":
     """
 
     subprocess.run(monitorCommands, shell=True)
+
+    print("EC2 instance and S3 bucket website launched successfully!")
 
