@@ -25,7 +25,7 @@ from os.path import exists
 from time import sleep, time
 
 
-def createInstance(keyName, imageId, userData, timeout=60):
+def createInstance(keyName, securityGroup, imageId, userData, timeout=60):
     """Creates a new EC2 instance."""
 
     ec2 = boto3.resource('ec2')
@@ -37,7 +37,7 @@ def createInstance(keyName, imageId, userData, timeout=60):
         MaxCount=1,
         InstanceType='t2.nano',
         KeyName=keyName,
-        SecurityGroupIds=['sg-076cb4038b190be4e'],
+        SecurityGroups=[securityGroup],
         UserData=userData
     )
 
@@ -126,7 +126,9 @@ def configureBucketWebsite(bucket, imageName):
 if __name__ == "__main__":
     # Default parameters
     keyName = "devopsAwsKey"
+    securityGroup = "launch-wizard-1"
     imageId = 'ami-006dcf34c09e50022'
+
 
     # Check if the first optional argument was passed
     try:
@@ -142,7 +144,13 @@ if __name__ == "__main__":
 
     # Check if the second optional argument was passed
     try:
-        imageId = sys.argv[2]
+        securityGroup = sys.argv[2]
+    except IndexError:
+        pass
+
+    # Check if the third optional argument was passed
+    try:
+        imageId = sys.argv[3]
     except IndexError:
         pass
 
@@ -162,7 +170,7 @@ if __name__ == "__main__":
                 touch /home/ec2-user/fileCommandsCompleted"""
 
     # Creating EC2 instance
-    instance = createInstance(keyName, imageId, userData, timeout=60)
+    instance = createInstance(keyName, securityGroup, imageId, userData, timeout=60)
 
     # Opening the Apache test page in the browser
     webbrowser.open_new_tab('http://' + instance.public_ip_address)

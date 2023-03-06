@@ -55,5 +55,8 @@ https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files
 * Boto3 - EC2 - Client - Describe Images - to get the latest AMI ID
 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2/paginator/DescribeImages.html
 
+* Boto3 - Catching exceptions when using a resource client
+https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#catching-exceptions-when-using-a-resource-client
+
 * Boto 3: Resource vs Client \
 https://www.learnaws.org/2021/02/24/boto3-resource-client/
