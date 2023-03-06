@@ -5,11 +5,12 @@
 
 """
     The script takes in a few optional arguments:
-    [1] - keyName
-    [2] - imageId
+    [1] - keyName: Key pair name (without the .pem extension)
+    [2] - securityGroup: Name of the existing security group
+    [3] - imageId: AMI (Amazon Machine Image) ID
 
     Example:
-    python3 devops1.py devopsAwsKey ami-006dcf34c09e50022
+    python3 devops1.py devopsAwsKey launch-wizard-1 ami-006dcf34c09e50022
 
     Default values are used when the arguments are not provided.
 """
@@ -193,8 +194,8 @@ if __name__ == "__main__":
         ssh -i {keyFilename} ec2-user@{instance.public_ip_address} 'chmod 700 monitor.sh'
         ssh -i {keyFilename} ec2-user@{instance.public_ip_address} './monitor.sh'
     """
-
+    print("*** MONITORING METRICS ***")
     subprocess.run(monitorCommands, shell=True)
-
+    print(26*"*")
     print("EC2 instance and S3 bucket website launched successfully!")
 

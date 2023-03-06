@@ -6,9 +6,11 @@ INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 MEMORYUSAGE=$(free -m | awk 'NR==2{printf "%.2f%%", $3*100/$2 }')
 PROCESSES=$(expr $(ps -A | grep -c .) - 1)
 HTTPD_PROCESSES=$(ps -A | grep -c httpd)
+DISKSPACEFREE=$(df -h --total | awk '/total/ {print $2}')
 
 echo "Instance ID: $INSTANCE_ID"
 echo "Memory utilisation: $MEMORYUSAGE"
+echo "Disk space available: $DISKSPACEFREE"
 echo "No of processes: $PROCESSES"
 if [ $HTTPD_PROCESSES -ge 1 ]
 then
