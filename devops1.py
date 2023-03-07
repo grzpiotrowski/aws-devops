@@ -14,7 +14,7 @@
     [4] - nameTag: EC2 Instance name
 
     Example:
-    python3 devops1.py devopsAwsKey launch-wizard-1 ami-006dcf34c09e50022
+    python3 devops1.py devopsAwsKey launch-wizard-1 ami-006dcf34c09e50022 "Test Web server"
 
     Default values are used when the arguments are not provided.
 """
@@ -143,11 +143,11 @@ if __name__ == "__main__":
     nameTag = "Test Web Server"
 
 
-    # Check if the first optional argument was passed
+    # Check if the first optional argument was passed (key pair name)
     try:
         keyName= sys.argv[1]
     except IndexError:
-        pass # No argument found. Using default keyPair instead (key pair name)
+        pass # No argument found. Using default keyPair instead
     
     # Check if key file exists
     keyFilename = keyName + ".pem"
@@ -224,6 +224,11 @@ if __name__ == "__main__":
     print("*** MONITORING METRICS ***")
     subprocess.run(monitorCommands, shell=True)
     print(26*"*")
-    
-    print("EC2 instance and S3 bucket website launched successfully!")
 
+    # Print IP and codes from web server access log (last 5 entries)
+    webServerLogCommand = f"ssh -i {keyFilename} ec2-user@{instance.public_ip_address}"
+    webServerLogCommand += ' "sudo tail -5 /var/log/httpd/access_log | awk \'{print \$1,\$9}\'"'
+    print("Web server access logs: IP and response code:")
+    subprocess.run(webServerLogCommand, shell=True)
+
+    print("EC2 instance and S3 bucket website launched successfully!")
