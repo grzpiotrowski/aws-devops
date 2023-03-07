@@ -4,10 +4,14 @@
 # DevOps Assignment 1
 
 """
+    Script creates a new EC2 Instance and an S3 Bucket in the default region.
+    Then an image is downloaded from a set URL and then uploaded and displayed on S3 website.
+
     The script takes in a few optional arguments:
     [1] - keyName: Key pair name (without the .pem extension)
     [2] - securityGroup: Name of the existing security group
     [3] - imageId: AMI (Amazon Machine Image) ID
+    [4] - nameTag: EC2 Instance name
 
     Example:
     python3 devops1.py devopsAwsKey launch-wizard-1 ami-006dcf34c09e50022
@@ -16,7 +20,6 @@
 """
 
 import boto3
-import botocore
 import webbrowser
 import subprocess
 import random
@@ -69,6 +72,14 @@ def createInstance(keyName, securityGroup, imageId, userData, nameTag, timeout=6
             print("Apache server installed and running at " + instance.public_ip_address)
             break
         sleep(10)
+    if time() > startTime+timeout:
+        print("Timed out: Apache server not running on the EC2 instance.")
+        answer = "ans"
+        while answer.lower() not in ["y", "n"]:
+            answer = input("Do you want to continue? [y/n] ")
+        if answer.lower() == 'n':
+            print("Exiting the script...")
+            exit()
 
     return instance
 
@@ -206,12 +217,13 @@ if __name__ == "__main__":
     
     # Upload and run monitoring script on EC2 instance
     monitorCommands = f"""
-        scp -i {keyFilename} monitor.sh ec2-user@{instance.public_ip_address}:.
+        scp -o StrictHostKeyChecking=no -i {keyFilename} monitor.sh ec2-user@{instance.public_ip_address}:.
         ssh -i {keyFilename} ec2-user@{instance.public_ip_address} 'chmod 700 monitor.sh'
         ssh -i {keyFilename} ec2-user@{instance.public_ip_address} './monitor.sh'
     """
     print("*** MONITORING METRICS ***")
     subprocess.run(monitorCommands, shell=True)
     print(26*"*")
+    
     print("EC2 instance and S3 bucket website launched successfully!")
 
