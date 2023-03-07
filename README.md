@@ -1,5 +1,8 @@
 # AWS DevOps
 
+The script creates a new EC2 Instance and an S3 Bucket in the default region.
+Then an image is downloaded from a set URL and then uploaded and displayed on S3 website.
+
 ## Getting started
 
 Install the AWS Command Line Interface:
@@ -36,6 +39,21 @@ or
 python3 -m pip install boto3
 ```
 
+## Running the script
+The script takes in a few optional arguments:
+* [1] - keyName: Key pair name (without the .pem extension)
+* [2] - securityGroup: Name of the existing security group
+* [3] - imageId: AMI (Amazon Machine Image) ID
+* [4] - nameTag: EC2 Instance name
+
+Example:
+```
+python3 devops1.py devopsAwsKey launch-wizard-1 ami-006dcf34c09e50022 "Test Web server"
+```
+
+Default values are used when the arguments are not provided.
+
+
 ## Resources
 * Boto3 documentation \
 https://boto3.amazonaws.com/v1/documentation/api/latest/index.html
@@ -61,3 +79,6 @@ https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.htm
 
 * Boto 3: Resource vs Client \
 https://www.learnaws.org/2021/02/24/boto3-resource-client/
+
+* How to parse apache log files with Awk
+https://luther.io/linux/how-to-parse-apache-log-files-with-awk/
