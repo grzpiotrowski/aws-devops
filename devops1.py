@@ -110,17 +110,14 @@ def createBucket():
 def configureBucketWebsite(bucket, imageName):
     """Configures a sample S3 bucket website with an image"""
 
-    s3 = boto3.resource('s3')
+    s3Client = boto3.client("s3")
 
     website_configuration = {
         'ErrorDocument': {'Key': 'error.html'},
         'IndexDocument': {'Suffix': 'index.html'}
     }
-
-    bucket_website = s3.BucketWebsite(bucket.name)
-    bucket_website.put(WebsiteConfiguration=website_configuration)
-
-    s3Client = boto3.client("s3")
+    
+    s3Client.put_bucket_website(Bucket=bucket.name, WebsiteConfiguration=website_configuration)
 
     # Upload image to S3 bucket and make it public
     s3Client.upload_file(imageName, bucket.name, imageName, ExtraArgs={'ACL':'public-read', 'ContentType':'image/jpeg'})
@@ -175,7 +172,7 @@ if __name__ == "__main__":
 
     # Commands to be executed when the instance is launched
     userData = """#!/bin/bash
-                #yum update -y
+                yum update -y
                 yum install httpd -y
                 systemctl enable httpd
                 systemctl start httpd

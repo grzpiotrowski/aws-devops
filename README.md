@@ -71,6 +71,9 @@ https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/bu
 * Boto3 - S3 - Uploading files \
 https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html
 
+* Boto3 - S3 - Put bucket website \
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_bucket_website.html
+
 * Boto3 - EC2 - Client - Describe Images - to get the latest AMI ID
 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2/paginator/DescribeImages.html
 
@@ -80,5 +83,5 @@ https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.htm
 * Boto 3: Resource vs Client \
 https://www.learnaws.org/2021/02/24/boto3-resource-client/
 
-* How to parse apache log files with Awk
+* How to parse apache log files with Awk \
 https://luther.io/linux/how-to-parse-apache-log-files-with-awk/
